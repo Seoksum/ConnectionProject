@@ -7,8 +7,8 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "Networking.h"
-#include "UDPServerRunnable.h"
-#include "UDPClientRunnable.h"
+#include "UDPReceiveRunnable.h"
+#include "UDPSendRunnable.h"
 #include "UDPClient.generated.h"
 
 
@@ -51,16 +51,14 @@ private:
     TSharedPtr<FInternetAddr> RemoteAddr;
     FThreadSafeBool bClientRunning;
     
-    TSharedPtr<FUDPClientRunnable> ClientRunnable;
-    TSharedPtr<FUDPServerRunnable> ServerRunnable;
+    TSharedPtr<FUDPSendRunnable> SendRunnable;
+    TSharedPtr<FUDPReceiveRunnable> ReceiveRunnable;
 
-    FRunnableThread* ClientRunnableThread;
-    FRunnableThread* ServerRunnableThread;
+    FRunnableThread* SendRunnableThread;
+    FRunnableThread* ReceiveRunnableThread;
 
     // ±¸Á¶Ã¼
 public:
-
-    FClientInfo ClientInfo;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class ULogWidget* LogWidget;

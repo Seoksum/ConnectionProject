@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Connection/UDPServerRunnable.h"
+#include "Connection/UDPReceiveRunnable.h"
 #include "Networking.h"
 #include "ConnectionGameInstance.h"
 #include "Kismet/GameplayStatics.h"
@@ -9,14 +9,14 @@
 #include "Connection/UDPClient.h"
 #include "UI/LogWidget.h"
 
-FUDPServerRunnable::FUDPServerRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InLocalAddr, UWorld* InWorld)
+FUDPReceiveRunnable::FUDPReceiveRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InLocalAddr, UWorld* InWorld)
     : Socket(InSocket), LocalAddr(InLocalAddr), bStopping(false), World(InWorld)
 {
     Thread = FRunnableThread::Create(this, TEXT("UDPServerRunnableThread"), 0, TPri_BelowNormal);
     MinimumStringLen = 3;
 }
 
-FUDPServerRunnable::~FUDPServerRunnable()
+FUDPReceiveRunnable::~FUDPReceiveRunnable()
 {
     if (Thread)
     {
@@ -26,13 +26,13 @@ FUDPServerRunnable::~FUDPServerRunnable()
     }
 }
 
-bool FUDPServerRunnable::Init()
+bool FUDPReceiveRunnable::Init()
 {
     UE_LOG(LogTemp, Log, TEXT("[PHONE] ServerRunnable Init() "));
     return (Socket != nullptr && LocalAddr.IsValid());
 }
 
-uint32 FUDPServerRunnable::Run()
+uint32 FUDPReceiveRunnable::Run()
 {
     // 서버 스레드의 메인 루프
     while (!bStopping)
@@ -44,12 +44,12 @@ uint32 FUDPServerRunnable::Run()
     return 0;
 }
 
-void FUDPServerRunnable::Stop()
+void FUDPReceiveRunnable::Stop()
 {
     bStopping = true;
 }
 
-void FUDPServerRunnable::ReceiveData()
+void FUDPReceiveRunnable::ReceiveData()
 {
     TArray<uint8> ReceivedData;
     ReceivedData.SetNumUninitialized(1024);
@@ -61,38 +61,28 @@ void FUDPServerRunnable::ReceiveData()
     // 데이터 수신
     if (Socket->RecvFrom(ReceivedData.GetData(), ReceivedData.Num(), BytesRead, *Sender))
     {
-        AsyncTask(ENamedThreads::GameThread, [this]()
-            {
-                Owner->LogWidget->AddLogMessage("???");
-                UE_LOG(LogTemp, Log, TEXT("'!?!?!"));
-            });
-
-
         if (BytesRead > 0)
         {
+            Owner->LogWidget->AddLogMessage("Received : " + ReceivedString);
             ReceivedString = FString(ANSI_TO_TCHAR(reinterpret_cast<const char*>(ReceivedData.GetData())));
-            UE_LOG(LogTemp, Log, TEXT("[PHONE]Received Messages : %s"), *ReceivedString);
-            //ReceivedString = "";
-
             AsyncTask(ENamedThreads::GameThread, [this]()
                 {
                     // UWorld를 사용한 작업은 반드시 게임 스레드에서 실행되어야 합니다.
                     // ValidWorld에서 필요한 작업 수행
                     if (World.IsValid())
                     {
-                        // Json 파일로 저장
-                        UWorld* ValidWorld = World.Get();
-                        SaveToJson(ReceivedString, ValidWorld);    
-                        Owner->LogWidget->AddLogMessage(ReceivedString);
+                        UWorld* ValidWorld = World.Get();                           
+                        //Owner->LogWidget->AddLogMessage(ReceivedString);
                     }
                 });
-            ReceivedString.Empty();
+            //ReceivedString.Empty();
+            //ReceivedString = "";
             //OnReceiveClientMessage(Sender, Sender->GetPort());
         }
     }
 }
 
-void FUDPServerRunnable::SaveToJson(const FString& ReceivedMessage, UWorld* MyWorld)
+void FUDPReceiveRunnable::SaveToJson(const FString& ReceivedMessage, UWorld* MyWorld)
 {
     TArray<FString> Paths;
     ReceivedMessage.ParseIntoArray(Paths, TEXT("."));
@@ -116,7 +106,7 @@ void FUDPServerRunnable::SaveToJson(const FString& ReceivedMessage, UWorld* MyWo
     }
 }
 
-void FUDPServerRunnable::OnReceiveClientMessage(const FIPv4Address& ClientIP, int32 ClientPort)
+void FUDPReceiveRunnable::OnReceiveClientMessage(const FIPv4Address& ClientIP, int32 ClientPort)
 {
     FString ClientKey = ClientIP.ToString() + TEXT(":") + FString::FromInt(ClientPort);
 

@@ -6,8 +6,7 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "HAL/RunnableThread.h"
-#include "Connection/UDPClientRunnable.h"
-#include "Connection/UDPServerRunnable.h"
+#include "Connection/UDPSendRunnable.h"
 #include "ConnectionGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/LogWidget.h"
@@ -24,7 +23,7 @@ AUDPClient::AUDPClient()
 
 	PrimaryActorTick.bCanEverTick = false;
 	ClientSocket = nullptr;
-	ClientRunnableThread = nullptr;
+	SendRunnableThread = nullptr;
 
 	ServerIP = TEXT("192.168.0.106");
 	ServerPort = 8001;
@@ -51,9 +50,9 @@ void AUDPClient::BeginPlay()
 void AUDPClient::SendMessageToThread(FString InMessage)
 {
 	// 블루프린트에서 호출
-	if (ClientRunnable)
+	if (SendRunnable)
 	{
-		ClientRunnable->SendedMessage(InMessage);
+		SendRunnable->SendedMessage(InMessage);
 	}
 }
 
@@ -82,7 +81,7 @@ void AUDPClient::CreateSocket()
 
 	if (ClientSocket)
 	{
-		const FString Message = TEXT("Hello from Client !");
+		const FString Message = TEXT("Hello");
 		int32 BytesSent = 0;
 		ClientSocket->SendTo((uint8*)TCHAR_TO_UTF8(*Message), Message.Len(), BytesSent, *RemoteAddr);
 	}
@@ -90,24 +89,24 @@ void AUDPClient::CreateSocket()
 
 void AUDPClient::StartClientThread()
 {
-	ClientRunnable = MakeShared<FUDPClientRunnable>(ClientSocket, RemoteAddr);
-	ClientRunnableThread = FRunnableThread::Create(ClientRunnable.Get(), TEXT("UDPClientRunnableThread"), 0, TPri_BelowNormal);
-	ClientRunnable->Owner = this;
+	SendRunnable = MakeShared<FUDPSendRunnable>(ClientSocket, RemoteAddr);
+	SendRunnableThread = FRunnableThread::Create(SendRunnable.Get(), TEXT("UDPClientRunnableThread"), 0, TPri_BelowNormal);
+	SendRunnable->Owner = this;
 
-	ServerRunnable = MakeShared<FUDPServerRunnable>(ClientSocket, RemoteAddr, GetWorld());
-	ServerRunnableThread = FRunnableThread::Create(ServerRunnable.Get(), TEXT("UDPServerRunnableThread"), 0, TPri_BelowNormal);
-	ServerRunnable->Owner = this;
+	ReceiveRunnable = MakeShared<FUDPReceiveRunnable>(ClientSocket, RemoteAddr, GetWorld());
+	ReceiveRunnableThread = FRunnableThread::Create(ReceiveRunnable.Get(), TEXT("UDPServerRunnableThread"), 0, TPri_BelowNormal);
+	ReceiveRunnable->Owner = this;
 }
 
 
 void AUDPClient::StopClient()
 {
 	bClientRunning = false;
-	if (ClientRunnableThread)
+	if (SendRunnableThread)
 	{
-		ClientRunnableThread->Kill(true);
-		delete ClientRunnableThread;
-		ClientRunnableThread = nullptr;
+		SendRunnableThread->Kill(true);
+		delete SendRunnableThread;
+		SendRunnableThread = nullptr;
 	}
 
 	if (ClientSocket)

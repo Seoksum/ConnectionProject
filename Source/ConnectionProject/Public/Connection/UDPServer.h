@@ -7,7 +7,7 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "Networking.h"
-#include "UDPServerRunnable.h"
+#include "UDPReceiveRunnable.h"
 #include "UDPServer.generated.h"
 
 UCLASS()
@@ -33,7 +33,7 @@ private:
 
 	FSocket* Socket;
 	TSharedPtr<FInternetAddr> LocalAddr;
-	TSharedPtr<FUDPServerRunnable> ServerRunnable;
+	TSharedPtr<FUDPReceiveRunnable> ServerRunnable;
 	FRunnableThread* ServerThread;
 
 	FString ServerIP;

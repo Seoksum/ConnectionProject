@@ -6,7 +6,7 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "HAL/RunnableThread.h"
-#include "Connection/UDPServerRunnable.h"
+#include "Connection/UDPReceiveRunnable.h"
 
 
 // Sets default values
@@ -62,7 +62,7 @@ void AUDPServer::CreateSocket()
 void AUDPServer::StartServerThread()
 {
     // UDPServerRunnable 생성 및 스레드 시작
-    ServerRunnable = MakeShared<FUDPServerRunnable>(Socket, LocalAddr, GetWorld());
+    ServerRunnable = MakeShared<FUDPReceiveRunnable>(Socket, LocalAddr, GetWorld());
     //ServerRunnable = new FUDPServerRunnable(Socket, LocalAddr);
     ServerThread = FRunnableThread::Create(ServerRunnable.Get(), TEXT("UDPServerRunnableThread"), 0, TPri_BelowNormal);
 }

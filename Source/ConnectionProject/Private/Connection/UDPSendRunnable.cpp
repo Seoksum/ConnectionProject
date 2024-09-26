@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Connection/UDPClientRunnable.h"
+#include "Connection/UDPSendRunnable.h"
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "Common/UdpSocketBuilder.h"
@@ -11,25 +11,25 @@
 #include "Connection/UDPClient.h"
 
 
-FUDPClientRunnable::FUDPClientRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InRemoteAddr)
+FUDPSendRunnable::FUDPSendRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InRemoteAddr)
     : Socket(InSocket), RemoteAddr(InRemoteAddr), Thread(nullptr), bStopping(false)
 {
     Thread = FRunnableThread::Create(this, TEXT("UDPClientRunnableThread"), 0, TPri_BelowNormal);
 
 }
 
-FUDPClientRunnable::~FUDPClientRunnable()
+FUDPSendRunnable::~FUDPSendRunnable()
 {
     Stop();
 }
 
-bool FUDPClientRunnable::Init()
+bool FUDPSendRunnable::Init()
 {
 
     return (Socket != nullptr && RemoteAddr.IsValid());
 }
 
-uint32 FUDPClientRunnable::Run()
+uint32 FUDPSendRunnable::Run()
 {
     while (!bStopping)
     {
@@ -47,12 +47,12 @@ uint32 FUDPClientRunnable::Run()
     return 0;
 }
 
-void FUDPClientRunnable::Stop()
+void FUDPSendRunnable::Stop()
 {
     bStopping = true;
 }
 
-void FUDPClientRunnable::SendData(const FString& DataToSend)
+void FUDPSendRunnable::SendData(const FString& DataToSend)
 {
     FTCHARToUTF8 Convert(*DataToSend);
     int32 BytesSent = 0;
@@ -63,7 +63,7 @@ void FUDPClientRunnable::SendData(const FString& DataToSend)
     //bool bDidSend = Socket->SendTo((uint8*)Convert.Get(), Convert.Length(), BytesSent, *RemoteAddr);
 }
 
-void FUDPClientRunnable::SendedMessage(const FString& InMessageToSend)
+void FUDPSendRunnable::SendedMessage(const FString& InMessageToSend)
 {
     MessageToSend = InMessageToSend;
 }

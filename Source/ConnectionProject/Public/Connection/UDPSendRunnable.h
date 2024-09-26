@@ -8,14 +8,14 @@
 /**
  * 
  */
-class CONNECTIONPROJECT_API FUDPClientRunnable : public FRunnable
+class CONNECTIONPROJECT_API FUDPSendRunnable : public FRunnable
 {
     // FUDPClientRunnable -> 스레드 클래스. 
      // 데이터 송수신과 같은 네트워크 작업을 비동기적으로 처리(SendData)
 
 public:
-    FUDPClientRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InRemoteAddr);
-    virtual ~FUDPClientRunnable();
+    FUDPSendRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InRemoteAddr);
+    virtual ~FUDPSendRunnable();
 
     virtual bool Init() override;
     virtual uint32 Run() override;

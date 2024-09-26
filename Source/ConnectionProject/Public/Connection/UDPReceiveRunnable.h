@@ -18,15 +18,15 @@ struct FClientInfo
     FDateTime LastReceived;     // 마지막으로 메시지를 받은 시간
 };
 
-class CONNECTIONPROJECT_API FUDPServerRunnable : public FRunnable
+class CONNECTIONPROJECT_API FUDPReceiveRunnable : public FRunnable
 {
     // FUDPServerRunnable -> 스레드 클래스. 
      // 데이터 송수신과 같은 네트워크 작업을 비동기적으로 처리(SendData, ReceiveData)
 
 public:
 
-    FUDPServerRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InLocalAddr, UWorld* InWorld);
-    virtual ~FUDPServerRunnable();
+    FUDPReceiveRunnable(FSocket* InSocket, TSharedPtr<FInternetAddr> InLocalAddr, UWorld* InWorld);
+    virtual ~FUDPReceiveRunnable();
 
     virtual bool Init() override;
     virtual uint32 Run() override;
